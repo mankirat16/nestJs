@@ -1,0 +1,44 @@
+vertical slice architecture 
+:project should be distributed feature wise 
+->domain : [entities , enums , events] 
+->features : [main code , service + controller ]
+->infra  : [remaining portion , databases : seeders , migrations  , helpers , constants  ]
+avoid global exceptions ->  : : lack of control 
+use try catch 
+always use cli to make components;
+
+middlewares-> using the @Use()  decorator 
+use angular cli to get boilerpalte of middleware
+
+make CRUD operations
+
+interceptors ->for file upload 
+
+TYPE ORM 
+npm packages
+orm config : package.json
+
+
+migrations : seeders : entities 
+npm run typeorm : generate 
+typeorm-extension
+
+
+study(from scholarship project) : folder strcture , service ,type-orm , DI 
+--------------------------------------------------------------------------------------------------
+Throttling (rate limiter )
+securing the apis 
+limiting number of hits per second (queue the remaining resuests)
+throttle module(in built)
+    -gloabal
+    -decorator(to throttle certain apis)(by using register function-> ttl , limit)
+
+Redis -> microservices , queue jobs , caching
+nest provides a cache manager -> track data and api calls (sometimes doesnt support due to large data)
+
+inbuilt logger in nest 
+
+scoping
+default scope  , http scope 
+
+compression and helmet(adds extra header in request for more security)
