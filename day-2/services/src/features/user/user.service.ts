@@ -8,6 +8,10 @@ import { MyGateway } from 'src/infrastructure/gateway/gateway';
 const saltRounds = 10;
 const salt = bcrypt.genSaltSync(saltRounds);
 import { dataSource } from 'ormconfig';
+import { UserDto } from './dto/user.dto';
+import { LogInDto } from './dto/userLogin.dto';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 export class UserService {
   constructor(
     @InjectRepository(UserRepository)
@@ -15,12 +19,22 @@ export class UserService {
     @InjectRepository(SessionRepository)
     private sessionRepository: SessionRepository,
     private myGateway: MyGateway,
+    private jwtService: JwtService,
   ) {}
   checkPoint(): string {
     return 'hello';
   }
-  async createUser(payload: UserInterface, sessionID: string): Promise<User> {
+  async createUser(payload: UserDto, sessionID: string): Promise<User> {
+    const emailInUse = await this.userRepository.findOne({
+      where: {
+        email: payload.email,
+      },
+    });
+    if (emailInUse) {
+      throw new BadRequestException('Email already in use');
+    }
     payload.password = bcrypt.hashSync(payload.password, salt);
+
     const user = await this.userRepository.create(payload);
     const result = await this.userRepository.save(user);
     const newSession = await this.sessionRepository.create({
@@ -32,16 +46,19 @@ export class UserService {
     this.myGateway.handleRoom(user.uuid);
     return user;
   }
-  async login(payload: UserInterface): Promise<Boolean> {
+  async login(payload: LogInDto): Promise<string> {
     const user = await this.userRepository.findOne({
       where: {
         email: payload.email,
       },
     });
-    if (bcrypt.compareSync(payload.password, user.password)) {
-      return true;
+    if (!user) {
+      throw new UnauthorizedException('User does not exist');
     }
-    return false;
+    if (bcrypt.compareSync(payload.password, user.password)) {
+      return await this.generateUserToken(user);
+    }
+    return 'Invalid username or password';
   }
   async getAllUsers(): Promise<Object[]> {
     const users = await this.userRepository.find();
@@ -91,5 +108,13 @@ export class UserService {
     } else {
       return false;
     }
+  }
+  async generateUserToken(user: UserDto) {
+    return await this.jwtService.sign(
+      {
+        user,
+      },
+      { expiresIn: '2 days' },
+    );
   }
 }

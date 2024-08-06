@@ -7,6 +7,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SessionModule } from './features/session/session.module';
 import { UserModule } from './features/user/user.module';
 import { GatewayModule } from './infrastructure/gateway/gateway.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -20,6 +21,10 @@ import { GatewayModule } from './infrastructure/gateway/gateway.module';
     SessionModule,
     UserModule,
     GatewayModule,
+    JwtModule.register({
+      global: true,
+      secret: 'my-secret',
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],

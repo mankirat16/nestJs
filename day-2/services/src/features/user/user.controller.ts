@@ -10,6 +10,8 @@ import {
 import { UserService } from './user.service';
 import { UserInterface } from './interfaces/user.interface';
 import { Request, Response } from 'express';
+import { UserDto } from './dto/user.dto';
+import { LogInDto } from './dto/userLogin.dto';
 @Controller('/user')
 export class UserController {
   constructor(private userService: UserService) {}
@@ -26,11 +28,7 @@ export class UserController {
     }
   }
   @Post('add-user')
-  async createUser(
-    @Body() body: UserInterface,
-    @Res() res: Response,
-    @Req() req,
-  ) {
+  async createUser(@Body() body: UserDto, @Res() res: Response, @Req() req) {
     try {
       await this.userService.createUser(body, req.sessionID);
       req.session.user = true;
@@ -38,14 +36,15 @@ export class UserController {
         .status(HttpStatus.OK)
         .json({ message: 'User added successfully' });
     } catch (e) {
+      console.log(e);
       return res
         .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ message: 'error while adding user' });
+        .json({ message: e, statusCode: 404 });
     }
   }
 
   @Post('login')
-  async login(@Body() body: UserInterface, @Res() res: Response, @Req() req) {
+  async login(@Body() body: LogInDto, @Res() res: Response, @Req() req) {
     if (req.session.user) {
       return res
         .status(200)
@@ -57,16 +56,14 @@ export class UserController {
         req.session.user = true;
         res
           .status(HttpStatus.ACCEPTED)
-          .json({ messsage: 'Logged in Successfully' });
+          .json({ messsage: 'Logged in Successfully', token: result });
       } else {
         res
           .status(HttpStatus.FORBIDDEN)
           .json({ message: 'Invalid username or password' });
       }
     } catch (e) {
-      res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ message: 'An error occured' });
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: e });
     }
   }
   @Post('edit-user')
